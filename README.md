@@ -43,6 +43,16 @@ python3 app.py & python3 noise_generator.py &
 # Run SystemTap tracing
 sudo stap -v dtrace_scripts/syscalls.d
 ```
+<img width="1220" height="634" alt="image" src="https://github.com/user-attachments/assets/837bb916-3479-48f7-91b3-5ffd2ee84de2" />
+
+**Evaluate**
+
+- **Script syntax and logic:** ✅ fine  
+- **SystemTap runtime & dev tools:** ❌ version not fully compatible with kernel 6.14  
+- **Kernel:** ❌ too new for current SystemTap version  
+
+**Result:** SystemTap cannot compile the module → script will not run
+
 
 ## CPU and Memory Limits (Optional)
 
@@ -80,4 +90,28 @@ sudo apt-get install -y linux-headers-$(uname -r)
 
 # Verify SystemTap installation
 stap -V
+```
+
+### Suggest solution for kernel
+
+**Key differences from SystemTap:**
+
+- Uses **tracepoint** directly (kernel tracepoints)  
+- Uses **comm** instead of `execname()`  
+- Uses **@ aggregations** like DTrace  
+- Much **faster to run** (no compilation needed)  
+
+**To test on your Ubuntu system:**
+
+```bash
+sudo apt install -y bpftrace
+sudo bpftrace dtrace_scripts/syscalls.d
+```
+
+**Try running one script first. If it works, you can run the others:**
+
+```bash
+sudo bpftrace dtrace_scripts/io_analysis.d
+sudo bpftrace dtrace_scripts/process_info.d
+sudo bpftrace dtrace_scripts/cpu_usage.d
 ```
