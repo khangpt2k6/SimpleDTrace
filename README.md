@@ -11,7 +11,7 @@ docker run -it --privileged --cpus=0.5 -m 512m ubuntu:22.04 /bin/bash
 apt update && apt install -y python3 python3-pip systemtap curl git
 
 # Copy project
-git clone <your-repo> /app
+git clone https://github.com/khangpt2k6/SimpleDTrace /app
 cd /app
 
 # Install Python deps
