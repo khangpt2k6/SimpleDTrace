@@ -1,30 +1,22 @@
-#!/usr/bin/stap
+#!/usr/bin/bpftrace
 
-global calls, times
-
-probe kernel.function("__x64_sys_*").call
+tracepoint:raw_syscalls:sys_enter
+/comm == "python" || comm == "python3"/
 {
-    if (execname() == "python" || execname() == "python3") {
-        calls[execname(), probefunc()]++
-    }
+    @calls[comm, syscall] = count();
 }
 
-probe kernel.function("__x64_sys_*").return
+tracepoint:raw_syscalls:sys_exit
+/comm == "python" || comm == "python3"/
 {
-    if (execname() == "python" || execname() == "python3") {
-        times[execname(), probefunc()]++
-    }
+    @times[comm, syscall] = count();
 }
 
-probe end
+END
 {
     printf("\n=== System Calls Summary ===\n");
-    foreach ([proc, func] in calls) {
-        printf("%s -> %s: %d\n", proc, func, calls[proc, func]);
-    }
+    print(@calls);
     
     printf("\n=== System Call Frequency ===\n");
-    foreach ([proc, func] in times) {
-        printf("%s -> %s: %d calls\n", proc, func, times[proc, func]);
-    }
+    print(@times);
 }

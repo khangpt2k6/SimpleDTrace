@@ -1,34 +1,27 @@
-#!/usr/bin/stap
+#!/usr/bin/bpftrace
 
-global total_syscalls
-
-probe kernel.function("__x64_sys_execve").call
+tracepoint:sched:sched_process_fork
+/comm == "python" || comm == "python3"/
 {
-    if (execname() == "python" || execname() == "python3") {
-        printf("[%s] New process: %s (PID:%d, PPID:%d)\n",
-               ctime(gettimeofday_s()), execname(), pid(), ppid());
-    }
+    printf("[%s] New process: %s (PID:%d, PPID:%d)\n",
+           strftime("%H:%M:%S", nsecs / 1e9), comm, child_pid, pid);
 }
 
-probe kernel.function("do_exit").call
+tracepoint:sched:sched_process_exit
+/comm == "python" || comm == "python3"/
 {
-    if (execname() == "python" || execname() == "python3") {
-        printf("[%s] Process exited: %s (PID:%d)\n",
-               ctime(gettimeofday_s()), execname(), pid());
-    }
+    printf("[%s] Process exited: %s (PID:%d)\n",
+           strftime("%H:%M:%S", nsecs / 1e9), comm, pid);
 }
 
-probe kernel.function("__x64_sys_*").call
+tracepoint:raw_syscalls:sys_enter
+/pid != 0 && (comm == "python" || comm == "python3")/
 {
-    if (pid() != 0 && (execname() == "python" || execname() == "python3")) {
-        total_syscalls[execname()]++
-    }
+    @total_syscalls[comm] = count();
 }
 
-probe end
+END
 {
     printf("\n=== Process Activity Summary ===\n");
-    foreach (proc in total_syscalls) {
-        printf("%s: %d system calls\n", proc, total_syscalls[proc]);
-    }
+    print(@total_syscalls);
 }

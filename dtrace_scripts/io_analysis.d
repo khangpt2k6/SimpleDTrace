@@ -1,32 +1,25 @@
-#!/usr/bin/stap
+#!/usr/bin/bpftrace
 
-global io
-
-probe kernel.function("__x64_sys_read").call,
-      kernel.function("__x64_sys_write").call,
-      kernel.function("__x64_sys_open").call,
-      kernel.function("__x64_sys_close").call,
-      kernel.function("__x64_sys_openat").call
+tracepoint:syscalls:sys_enter_read,
+tracepoint:syscalls:sys_enter_write,
+tracepoint:syscalls:sys_enter_open,
+tracepoint:syscalls:sys_enter_close,
+tracepoint:syscalls:sys_enter_openat
+/comm == "python" || comm == "python3"/
 {
-    if (execname() == "python" || execname() == "python3") {
-        printf("[%s] %s (PID:%d) -> %s()\n",
-               ctime(gettimeofday_s()), execname(), pid(), probefunc());
-    }
+    printf("[%s] %s (PID:%d) -> %s\n", strftime("%H:%M:%S", nsecs / 1e9), comm, pid, probe);
 }
 
-probe kernel.function("__x64_sys_read").return,
-      kernel.function("__x64_sys_write").return
+tracepoint:syscalls:sys_exit_read,
+tracepoint:syscalls:sys_exit_write
+/comm == "python" || comm == "python3"/
 {
-    if (execname() == "python" || execname() == "python3") {
-        printf("       Result: %ld bytes\n", $return);
-        io[execname(), probefunc()]++
-    }
+    printf("       Result: %ld\n", retval);
+    @io[comm, probe] = count();
 }
 
-probe end
+END
 {
     printf("\n=== I/O Operations Summary ===\n");
-    foreach ([proc, func] in io) {
-        printf("%s -> %s: %d operations\n", proc, func, io[proc, func]);
-    }
+    print(@io);
 }
