@@ -8,25 +8,28 @@
  * Shows: Process scheduling, context switches, CPU time allocation
  */
 
-sched:::off-cpu
-/execname == "python" || execname == "python3"/
+probe scheduler.cpu_off
 {
-    printf("[%Y] %s (PID:%d) off CPU after %d nanoseconds\n",
-           walltimestamp, execname, pid, (timestamp - self->start));
-    self->start = 0;
+    if (execname() == "python" || execname() == "python3") {
+        printf("[%s] %s (PID:%d) off CPU\n",
+               ctime(gettimeofday_s()), execname(), pid());
+    }
 }
 
-sched:::on-cpu
-/execname == "python" || execname == "python3"/
+probe scheduler.cpu_on
 {
-    printf("[%Y] %s (PID:%d) on CPU\n", walltimestamp, execname, pid);
-    self->start = timestamp;
+    if (execname() == "python" || execname() == "python3") {
+        printf("[%s] %s (PID:%d) on CPU\n",
+               ctime(gettimeofday_s()), execname(), pid());
+    }
 }
 
-sched:::wakeup
-/execname == "python" || execname == "python3"/
+probe scheduler.wakeup
 {
-    printf("[%Y] %s (PID:%d) woken up\n", walltimestamp, execname, pid);
+    if (execname() == "python" || execname() == "python3") {
+        printf("[%s] %s (PID:%d) woken up\n",
+               ctime(gettimeofday_s()), execname(), pid());
+    }
 }
 
 END

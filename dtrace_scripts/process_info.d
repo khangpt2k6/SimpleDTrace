@@ -8,38 +8,27 @@
  * Shows: Process lifecycle, thread activity, resource statistics
  */
 
-proc:::exec-success
-/execname == "python" || execname == "python3"/
+probe process.create
 {
-    printf("[%Y] New process: %s (PID:%d, PPID:%d)\n",
-           walltimestamp, execname, pid, ppid);
+    if (execname() == "python" || execname() == "python3") {
+        printf("[%s] New process: %s (PID:%d, PPID:%d)\n",
+               ctime(gettimeofday_s()), execname(), pid(), ppid());
+    }
 }
 
-proc:::exit
-/execname == "python" || execname == "python3"/
+probe process.exit
 {
-    printf("[%Y] Process exited: %s (PID:%d, exit code:%d)\n",
-           walltimestamp, execname, pid, arg0);
+    if (execname() == "python" || execname() == "python3") {
+        printf("[%s] Process exited: %s (PID:%d)\n",
+               ctime(gettimeofday_s()), execname(), pid());
+    }
 }
 
-thread:::create
-/execname == "python" || execname == "python3"/
+probe syscall.*.entry
 {
-    printf("[%Y] New thread created in %s (PID:%d, TID:%d)\n",
-           walltimestamp, execname, pid, tid);
-}
-
-syscall:::entry
-/pid != 0 && (execname == "python" || execname == "python3")/
-{
-    self->in_syscall = 1;
-}
-
-syscall:::return
-/self->in_syscall && (execname == "python" || execname == "python3")/
-{
-    @total_syscalls[execname] = count();
-    self->in_syscall = 0;
+    if (pid() != 0 && (execname() == "python" || execname() == "python3")) {
+        @total_syscalls[execname()] <<< 1;
+    }
 }
 
 END

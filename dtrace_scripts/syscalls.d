@@ -8,16 +8,18 @@
  * Shows: Syscall name, process name, execution time
  */
 
-tracepoint:syscalls:sys_enter_*
-/execname == "python" || execname == "python3"/
+probe syscall.*.entry
 {
-    @calls[execname, probefunc] = count();
+    if (execname() == "python" || execname() == "python3") {
+        @calls[execname(), probefunc()] <<< 1;
+    }
 }
 
-tracepoint:syscalls:sys_exit_*
-/execname == "python" || execname == "python3"/
+probe syscall.*.return
 {
-    @times[execname, probefunc] = count();
+    if (execname() == "python" || execname() == "python3") {
+        @times[execname(), probefunc()] <<< 1;
+    }
 }
 
 END
