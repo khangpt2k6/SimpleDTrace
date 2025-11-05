@@ -1,7 +1,7 @@
 # CPU Contention Analysis with DTrace - Quick Command Guide
 
 ## DTrace/SystemTap Commands (Linux/macOS Only)
-### Option B: Using Raw Ubuntu Container
+#### Using Raw Ubuntu Container
 
 ```bash
 # Start Ubuntu container with privileged access
