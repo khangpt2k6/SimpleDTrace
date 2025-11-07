@@ -63,6 +63,22 @@ To simulate resource constraints, you can use cgroups or Docker:
 docker run -it --privileged --cpus=0.5 -m 512m ubuntu:22.04 /bin/bash
 ```
 
+## Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+pytest --cov=. --cov-report=html
+
+# Run specific test file
+pytest tests/test_app.py
+
+# Run with verbose output
+pytest -v
+```
+
 ## Monitoring Commands
 
 ```bash
