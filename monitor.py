@@ -2,6 +2,7 @@ import requests
 import time
 import csv
 import sqlite3
+import os
 from datetime import datetime
 import statistics
 
@@ -23,6 +24,7 @@ def init_monitor_db():
             status_code INTEGER
         )
     ''')
+    cursor.execute('DELETE FROM monitor_stats')
     conn.commit()
     conn.close()
 
@@ -34,7 +36,27 @@ def log_to_db(timestamp, latency_ms, success, status_code):
     conn.commit()
     conn.close()
 
+def clear_monitoring_data():
+    """Clear all monitoring-related data (CSV and database tables)"""
+    # Clear CSV file (will be overwritten anyway, but explicit is better)
+    if os.path.exists(CSV_FILE):
+        os.remove(CSV_FILE)
+        print(f"Cleared {CSV_FILE}")
+    
+    # Clear database tables
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    # Clear monitor_stats table
+    cursor.execute('DELETE FROM monitor_stats')
+    
+    conn.commit()
+    conn.close()
+    print("Cleared monitoring data from database")
+
 def main():
+    # Clear old data before starting new monitoring session
+    clear_monitoring_data()
     init_monitor_db()
     
     with open(CSV_FILE, 'w', newline='') as csvfile:
